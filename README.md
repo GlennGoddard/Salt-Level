@@ -1,7 +1,8 @@
 # Salt-Level
 Checks level of salt in water softner brine tank
 
-Utilizes utrasonic sensor attached to a Raspberry Pi to comunicate level
+Utilizes utrasonic sensor attached to a Raspberry Pi to comunicate level via email or MQTT.
+
 Python 2.7; not currently python 3 syntaxed
 Utilizes paho mqtt client (not needed if not utilizing MQTT); just comment out import of mqtt if not using
 Utilizes smtplib library for email communication.
