@@ -2,13 +2,13 @@
 
 # Salt Tank Level Program
 
-# Last Change 2/28/2020 1150
+# Last Change 3/6/2020 2126
 
-import time						# Sleep Function
-import RPi.GPIO as GPIO			# GPIO Controls
+import time			# Sleep Function
+import RPi.GPIO as GPIO		# GPIO Controls
 from datetime import datetime	# Now Fuction
-import smtplib					# Email Library
-from decimal import Decimal		# Convert float to Decimal
+import smtplib			# Email Library
+from decimal import Decimal	# Convert float to Decimal
 import paho.mqtt.client as mqtt	# Allow publishing to MQTT Server
 
 # sudo python2.7 -m pip install paho-mqtt
@@ -18,39 +18,44 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 '''  Define Variables   '''
-Trigger	= 8				# Set Trigger to GPIO 8
-Echo	= 25			# Set Echo to GPIO 25
-Wait	= 2				# Set time between pulses in seconds
+Trigger	= 8			# Set Trigger to GPIO 8 *** As Needed ***
+Echo	= 25			# Set Echo to GPIO 25 *** As Needed ***
+Wait	= 2			# Set time between pulses in seconds
 Pulse	= 0.00001		# Set ultrasonic pulse length in seconds
 PWait	= 60			# Wait time for testing
-#PWait	= 600			# Time between readings in seconds (24*60*60)
+PWait	= 600			# Time between readings in seconds (24*60*60) *** As desired ***
 Debug	= True			# Print to screen if True; do not comment out
 Debug	= False			# Do not Print to screen if False; comment out to be True
 Email	= False			# False to not send emails; do not comment out
-Email	= True			# True to send emails; comment out to be False
+Email	= True			# True to send emails; *** comment out to be False ***
+MQTT_Enable = False		# False to not send MQTT; do not comment out
+MQTT_Enable = True		# True to send MQTT *** comment out to be False ***
 Samples	= 11			# Number of samples to take for average
-lvTop	= 5				# Top of Tank from Sensor
-lvBag	= 4				# Level of inces of Salt per 40lb bag (4" per bag leveled)
-lvFull	= lvTop	+ lvBag	# Full Tank level
-TopLv	= 35			# Tank top level from bottom (33.3")
-BottomLv= 11			# Top of water level from absolute bottom (lowest measureable level)
-lvEmpty	= TopLv-BottomLv# Water level in tank is empty from Sensor, Sensor is at 35" from bottom
+lvTop	= 5			# Top of Tank from Sensor  *** Depends on your tank ***
+lvBag	= 4			# Level of inces of Salt per 40lb bag (4" per bag leveled)  *** Depends on your tank ***
+lvFull	= lvTop	+ lvBag		# Full Tank level
+TopLv	= 35			# Tank top level from bottom (33.3")  *** Depends on your tank ***
+BottomLv= 11			# Top of water level from absolute bottom (lowest measureable level) *** Depends on your tank ***
+lvEmpty	= TopLv-BottomLv	# Water level in tank is empty from Sensor, Sensor is at 35" from bottom
+Broker_IP = "10.74.1.224"	# MQTT Broker IP *** IP address of your MQTT Broker ***
+Broker_Port = "1883"		# MQTT Broker Port *** Port of your MQTT Broker 1883 is default ***
+MailDay	= 4			# Monday = 0, Tuesday = 1, Wensday = 2, Thursday = 3, Friday = 4, Saturday = 5, Sunday = 6 *** As Desired ***
 
 ''' GMail variables '''
-gmail_user = 'YourSendingEmail@gmail.com'	# Gmail account
-gmail_password = 'SendingEmailPassword'				# Gmail Password
-sent_from = gmail_user					# Email Sender
-to = ['YourEmail@gmail.com']			# Email Recipient
-cc = ['YourOtherEmail@gmail.com']		# 2nd Email Recipient
+gmail_user = 'YourSendingEmail@gmail.com'	# Gmail account *** Insert your email ***
+gmail_password = 'SendingEmailPassword'		# Gmail Password *** Insert your password ***
+sent_from = gmail_user				# Email Sender 'Do NOT edit'
+to = ['YourEmail@gmail.com']			# Email Recipient  *** Insert your 1st Recipient ***
+cc = ['YourOtherEmail@gmail.com']		# 2nd Email Recipient *** Insert your 2nd Recipient or comment out cc below ***
 subject = 'Salt Tank Status'			# Email Subject can be updated
-body = 'Body of email'					# Email Body can be updated
+body = 'Body of email'				# Email Body can be updated
 
-mail_sent = False						# Allow only one email on the designated day.
+mail_sent = False				# Allow only one email on the designated day.
 
 ''' Debug print to screen colors '''
-POff		= '\033[0m'		# Color Effects Off
-PBold		= '\033[1m'		# Bold
-PUnderline	= '\033[4m'		# Underline single
+POff		= '\033[0m'	# Color Effects Off
+PBold		= '\033[1m'	# Bold
+PUnderline	= '\033[4m'	# Underline single
 PBoldOff	= '\033[21m'	# Bold Off
 PBlinkOff	= '\033[25m'	# Blink Off
 PBlack		= '\033[90m'	# Black
@@ -65,7 +70,7 @@ PWhite		= '\033[97m'	# White
 
 ''' Set pins as output and input   '''
 GPIO.setup(Trigger, GPIO.OUT)	# Trigger
-GPIO.setup(Echo, GPIO.IN)		# Echo
+GPIO.setup(Echo, GPIO.IN)	# Echo
 
 ''' Set trigger to False (Low)   '''
 GPIO.output(Trigger, False)
@@ -112,43 +117,51 @@ def Message():
 	if Debug is True:
 		# Removed cc for testing
 		toAll = to
-	email_text = """\
+	try:
+		email_text = """\
 From: %s
 To: %s
 Subject: %s
 
 %s
 """ % (sent_from, ", ".join(to), subject, body)
-	server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
-	server.ehlo()
-	server.login(gmail_user, gmail_password)
-	server.sendmail(sent_from, toAll, email_text)
-	server.close()
+		server = smtplib.SMTP_SSL('smtp.gmail.com', 465)
+		server.ehlo()
+		server.login(gmail_user, gmail_password)
+		server.sendmail(sent_from, toAll, email_text)
+		server.close()
+		if Debug is True:
+			print (PCyan)
+			print "sent_from:\t",
+			print (sent_from)
+			print "to:\t\t",
+			print (to)
+			print "subject:\t",
+			print (subject)
+			print "body:\t\t",
+			print (body)
+			print (PPurple)
+			print "email_text:"
+			print (email_text)
+			print (POff)
 
-	if Debug is True:
-		print (PCyan)
-		print "sent_from:\t",
-		print (sent_from)
-		print "to:\t\t",
-		print (to)
-		print "subject:\t",
-		print (subject)
-		print "body:\t\t",
-		print (body)
-		print (PPurple)
-		print "email_text:"
-		print (email_text)
-		print (POff)
+	except:
+		#Handle email errors without crashing
+		if Debug is True:
+			print "Email send failure"
 
 def MQTT():
 	# Send to the MQTT Broker
 	try:
 		mqttc = mqtt.Client("python_pub")
-		mqttc.connect("10.74.1.224", 1883)
-		mqttc.publish("salt/Level (in)", SaltLv)
+		mqttc.connect(Broker_IP, Broker_Port)
 		mqttc.publish("salt/Percent (%)", PercentFull)
+		mqttc.publish("salt/Level (in)", SaltLv)
 		mqttc.publish("salt/BagsNeeded", Bags)
 		mqttc.publish("salt/LastReadTime", ETime)
+		mqttc.publish("salt/Email", Email)
+		mqttc.publish("salt/Debug", Debug)
+		
 		if Debug is True:
 			print "MQTT updated"
 	except:
@@ -185,13 +198,14 @@ try:
 	while True:
 		distance = measure_average()
 		Dist = str(round(distance,2))
-		Bags = str((int(distance))/lvBag)
+		Bags = str((int(distance-lvTop))/lvBag)
 		#PercentFull = str(int((TopLv - lvTop - distance)/(TopLv-lvTop)*100))
-		PercentFull = str(int((lvEmpty - distance)/(lvEmpty)*100))
+		PercentFull = str(int((lvEmpty - distance + lvTop)/(lvEmpty)*100))
 		SaltLv = str(round(TopLv - distance,2))
 		now = datetime.now()
 		ETime = str(now.strftime("at %H:%M:%S on %m-%d-%Y"))
-		MQTT()
+		if MQTT_Enable is True:
+			MQTT()
 
 		if Debug is True:
 			print (PYellow)
@@ -218,26 +232,26 @@ try:
 		if Email is True:
 			today = datetime.today()
 			Weekday = today.weekday()
-			# Monday = 0, Tuesday = 1, Wensday = 2, Thursday = 3, Friday = 4, Saturday = 5, Sunday = 6
 			if Debug is True:
 				# Send Email during Debug regardless of day or send schedule
-				print "Day of week is " + str(Weekday)
+				print "Current day of week is " + str(Weekday)
 				print "Monday = 0, Tuesday = 1, Wensday = 2, Thursday = 3, Friday = 4, Saturday = 5, Sunday = 6"
 				Message()
 			else:
-				if distance >= lvEmpty:
+				if distance >= lvEmpty and mail_sent is False:
 					# Send email if empty regardless of day of week
 					subject = 'Salt Tank is EMPTY'
 					body = "Tank Empty at " + PercentFull + "%, " + SaltLv + " inches of Salt, " + Dist + " inches from top, " + Bags + " Bags of Salt to Fill " + ETime
 					Message()
+					mail_sent = True # Allow only one empty level email vice one every read cycle
 				else:
-					if Weekday == 4 and mail_sent is False:
+					if Weekday == MailDay and mail_sent is False:
 						# Send email for tank status
 						subject = 'Salt Tank Status'
 						body = "Tank Level is " + PercentFull + "%, " + SaltLv + " inches of Salt, " + Dist + " inches from top, " + Bags + " Bags of Salt to Fill " + ETime
 						Message()
 						mail_sent = True # Allow only this email on sending day
-					if Weekday == 5:
+					if Weekday <> MailDay:
 						mail_sent = False # Reset to allow email next time
 
 		time.sleep(PWait)	# Sleep between readings
