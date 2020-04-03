@@ -21,3 +21,12 @@ Debugging has been pre-worked with the used of a single variable at the begining
 Debugging screen color codes are not all used; this is just a section that I put in all my scripts so I have the colors available without having to recreate it everytime.
 
 Once script is working for your situation, just add to a cron job to start at boot-up.
+
+## MQTT
+BagsNeeded - How many 40lb bags of salt to fill tank  
+Debug - True or False  
+Email - True or False  
+LastReadTime - Time of last MQTT post  
+Level (in) - Level of salt in inches from bottom of tank  
+Percent (%) - Percentage full of salt
+
