@@ -30,3 +30,7 @@ LastReadTime - Time of last MQTT post
 Level (in) - Level of salt in inches from bottom of tank  
 Percent (%) - Percentage full of salt
 
+## Change Log
+4/8/2020  
+Added a pause between MQTT Publish Topics, due to dropped topics on some MQTT Brokers  
+Expanded MQTT Debug  
