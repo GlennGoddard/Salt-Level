@@ -2,13 +2,13 @@
 
 # Salt Tank Level Program
 
-# Last Change 3/6/2020 2126
+# Last Change 4/8/2020 1450
 
-import time			# Sleep Function
-import RPi.GPIO as GPIO		# GPIO Controls
+import time						# Sleep Function
+import RPi.GPIO as GPIO			# GPIO Controls
 from datetime import datetime	# Now Fuction
-import smtplib			# Email Library
-from decimal import Decimal	# Convert float to Decimal
+import smtplib					# Email Library
+from decimal import Decimal		# Convert float to Decimal
 import paho.mqtt.client as mqtt	# Allow publishing to MQTT Server
 
 # sudo python2.7 -m pip install paho-mqtt
@@ -18,44 +18,48 @@ GPIO.setmode(GPIO.BCM)
 GPIO.setwarnings(False)
 
 '''  Define Variables   '''
-Trigger	= 8			# Set Trigger to GPIO 8 *** As Needed ***
+Trigger	= 8				# Set Trigger to GPIO 8 *** As Needed ***
 Echo	= 25			# Set Echo to GPIO 25 *** As Needed ***
-Wait	= 2			# Set time between pulses in seconds
+Wait	= 2				# Set time between pulses in seconds
 Pulse	= 0.00001		# Set ultrasonic pulse length in seconds
-PWait	= 60			# Wait time for testing
+PWait	= 20			# Wait time for testing
 PWait	= 600			# Time between readings in seconds (24*60*60) *** As desired ***
 Debug	= True			# Print to screen if True; do not comment out
 Debug	= False			# Do not Print to screen if False; comment out to be True
 Email	= False			# False to not send emails; do not comment out
 Email	= True			# True to send emails; *** comment out to be False ***
+MQTT_Email	= Email		# Variable to send Email info to MQTT since a 'Email' variable 'sometimes' as issues
 MQTT_Enable = False		# False to not send MQTT; do not comment out
 MQTT_Enable = True		# True to send MQTT *** comment out to be False ***
+MQTT_Debug	= Debug		# Variable to send Debug info to MQTT since a 'Debug' variable 'sometimes' as issues
 Samples	= 11			# Number of samples to take for average
-lvTop	= 5			# Top of Tank from Sensor  *** Depends on your tank ***
-lvBag	= 4			# Level of inces of Salt per 40lb bag (4" per bag leveled)  *** Depends on your tank ***
-lvFull	= lvTop	+ lvBag		# Full Tank level
-TopLv	= 35			# Tank top level from bottom (33.3")  *** Depends on your tank ***
+lvTop	= 4				# Top of Tank from Sensor  *** Depends on your tank ***
+lvBag	= 4				# Level of inces of Salt per 40lb bag (4" per bag leveled)  *** Depends on your tank ***
+lvFull	= lvTop	+ lvBag	# Full Tank level
+TopLv	= 33			# Tank top level from bottom (33.3")  *** Depends on your tank ***
 BottomLv= 11			# Top of water level from absolute bottom (lowest measureable level) *** Depends on your tank ***
-lvEmpty	= TopLv-BottomLv	# Water level in tank is empty from Sensor, Sensor is at 35" from bottom
+lvEmpty	= TopLv-BottomLv# Water level in tank is empty from Sensor, Sensor is at 35" from bottom
 Broker_IP = "10.74.1.224"	# MQTT Broker IP *** IP address of your MQTT Broker ***
-Broker_Port = "1883"		# MQTT Broker Port *** Port of your MQTT Broker 1883 is default ***
-MailDay	= 4			# Monday = 0, Tuesday = 1, Wensday = 2, Thursday = 3, Friday = 4, Saturday = 5, Sunday = 6 *** As Desired ***
+Broker_Port = "1883"	# MQTT Broker Port *** Port of your MQTT Broker 1883 is default ***
+MQTT_Wait	= .01		# Pause between MQTT Topic Pulishing
+MailDay	= 4				# Monday = 0, Tuesday = 1, Wensday = 2, Thursday = 3, Friday = 4, Saturday = 5, Sunday = 6 *** As Desired ***
 
 ''' GMail variables '''
-gmail_user = 'YourSendingEmail@gmail.com'	# Gmail account *** Insert your email ***
-gmail_password = 'SendingEmailPassword'		# Gmail Password *** Insert your password ***
-sent_from = gmail_user				# Email Sender 'Do NOT edit'
-to = ['YourEmail@gmail.com']			# Email Recipient  *** Insert your 1st Recipient ***
-cc = ['YourOtherEmail@gmail.com']		# 2nd Email Recipient *** Insert your 2nd Recipient or comment out cc below ***
+''' Sanatize for GitHub '''	# Sanatize for GitHub
+gmail_user = 'YourSendingEmail@gmail.com'	# Gmail account *** Insert your email *** # Sanatize for GitHub 'YourSendingEmail@gmail.com'
+gmail_password = 'YourPassword'				# Gmail Password *** Insert your password *** # Sanatize for GitHub 'YourPassword'
+sent_from = gmail_user					# Email Sender 'Do NOT edit'
+to = ['1stEmail@gmail.com']			# Email Recipient  *** Insert your 1st Recipient *** # Sanatize for GitHub '1stEmail@gmail.com'
+cc = ['2ndEmail@gmail.com']		# 2nd Email Recipient *** Insert your 2nd Recipient or comment out cc below *** # Sanatize for GitHub '2ndEmail@gmail.com'
 subject = 'Salt Tank Status'			# Email Subject can be updated
-body = 'Body of email'				# Email Body can be updated
+body = 'Body of email'					# Email Body can be updated
 
-mail_sent = False				# Allow only one email on the designated day.
+mail_sent = False						# Allow only one email on the designated day.
 
 ''' Debug print to screen colors '''
-POff		= '\033[0m'	# Color Effects Off
-PBold		= '\033[1m'	# Bold
-PUnderline	= '\033[4m'	# Underline single
+POff		= '\033[0m'		# Color Effects Off
+PBold		= '\033[1m'		# Bold
+PUnderline	= '\033[4m'		# Underline single
 PBoldOff	= '\033[21m'	# Bold Off
 PBlinkOff	= '\033[25m'	# Blink Off
 PBlack		= '\033[90m'	# Black
@@ -70,7 +74,7 @@ PWhite		= '\033[97m'	# White
 
 ''' Set pins as output and input   '''
 GPIO.setup(Trigger, GPIO.OUT)	# Trigger
-GPIO.setup(Echo, GPIO.IN)	# Echo
+GPIO.setup(Echo, GPIO.IN)		# Echo
 
 ''' Set trigger to False (Low)   '''
 GPIO.output(Trigger, False)
@@ -153,17 +157,29 @@ Subject: %s
 def MQTT():
 	# Send to the MQTT Broker
 	try:
+		# Some character in ETime stops MQTT, put last in publish for now
 		mqttc = mqtt.Client("python_pub")
 		mqttc.connect(Broker_IP, Broker_Port)
-		mqttc.publish("salt/Percent (%)", PercentFull)
-		mqttc.publish("salt/Level (in)", SaltLv)
-		mqttc.publish("salt/BagsNeeded", Bags)
-		mqttc.publish("salt/LastReadTime", ETime)
-		mqttc.publish("salt/Email", Email)
-		mqttc.publish("salt/Debug", Debug)
-		
-		if Debug is True:
-			print "MQTT updated"
+		#mqttc.publish("salt/TopicCount", "7")
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Percent", PercentFull)
+		if Debug is True: print 'MQTT published Percent'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Level", SaltLv)
+		if Debug is True: print 'MQTT published Level'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Bags", Bags)
+		if Debug is True: print 'MQTT published Bags'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Emails", MQTT_Email)
+		if Debug is True: print 'MQTT published Emails'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Time", ETime)
+		if Debug is True: print 'MQTT published Time'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Debug", MQTT_Debug)
+		if Debug is True: print 'MQTT published Debug'
+		if Debug is True: print "All MQTT updated"
 	except:
 		# Prevent crashing if Broker is disconnected
 		if Debug is True:
@@ -203,14 +219,14 @@ try:
 		PercentFull = str(int((lvEmpty - distance + lvTop)/(lvEmpty)*100))
 		SaltLv = str(round(TopLv - distance,2))
 		now = datetime.now()
-		ETime = str(now.strftime("at %H:%M:%S on %m-%d-%Y"))
+		ETime = str(now.strftime("%H:%M:%S on %m-%d-%Y"))
 		if MQTT_Enable is True:
 			MQTT()
 
 		if Debug is True:
 			print (PYellow)
 			#now = datetime.now()
-			Dist_Time = "Average Distance = " + Dist + " " + ETime
+			Dist_Time = "Average Distance = " + Dist + " at " + ETime
 			print (Dist_Time),
 			print " / " + Bags + " bags of salt needed. / ",
 			print (PercentFull),
