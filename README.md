@@ -23,12 +23,21 @@ Debugging screen color codes are not all used; this is just a section that I put
 Once script is working for your situation, just add to a cron job to start at boot-up.
 
 ## MQTT
-BagsNeeded - How many 40lb bags of salt to fill tank  
-Debug - True or False  
+Bags - How many 40lb bags of salt to fill tank  
+DebugEnabled - True or False  
+Count - # of MQTT Topics  
+MQTT_Finish - Ture or False  
 Email - True or False  
-LastReadTime - Time of last MQTT post  
-Level (in) - Level of salt in inches from bottom of tank  
-Percent (%) - Percentage full of salt
+MailDay - Day of Week email sent  
+MailDayInfo - Defines values for MailDay  
+Time - Time of last MQTT post  
+Level - Level of salt in inches from bottom of tank  
+Percent - Percentage full of salt  
+BottomLv - Just above water level  
+lvBag - Inches per bag  
+lvEmpty - Inches from top considered empty  
+lvFull - level considered full  
+lvTop - Top of tank from bottom  
 
 ## Change Log
 4/8/2020  
