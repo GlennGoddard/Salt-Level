@@ -2,7 +2,9 @@
 
 # Salt Tank Level Program
 
-# Last Change 4/8/2020 1450
+# Last Change 4/17/2020 1430
+# Added MQTT Topics
+# Added decimal to PercentFull and Bags
 
 import time						# Sleep Function
 import RPi.GPIO as GPIO			# GPIO Controls
@@ -33,7 +35,7 @@ MQTT_Enable = False		# False to not send MQTT; do not comment out
 MQTT_Enable = True		# True to send MQTT *** comment out to be False ***
 MQTT_Debug	= Debug		# Variable to send Debug info to MQTT since a 'Debug' variable 'sometimes' as issues
 Samples	= 11			# Number of samples to take for average
-lvTop	= 4				# Top of Tank from Sensor  *** Depends on your tank ***
+lvTop	= 3				# Top of Tank from Sensor  *** Depends on your tank ***
 lvBag	= 4				# Level of inces of Salt per 40lb bag (4" per bag leveled)  *** Depends on your tank ***
 lvFull	= lvTop	+ lvBag	# Full Tank level
 TopLv	= 33			# Tank top level from bottom (33.3")  *** Depends on your tank ***
@@ -157,10 +159,14 @@ Subject: %s
 def MQTT():
 	# Send to the MQTT Broker
 	try:
-		# Some character in ETime stops MQTT, put last in publish for now
 		mqttc = mqtt.Client("python_pub")
 		mqttc.connect(Broker_IP, Broker_Port)
-		#mqttc.publish("salt/TopicCount", "7")
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Debugy/MQTT_Finish", 'False')
+		if Debug is True: print 'MQTT published MQTT_All False'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Debugy/Count", '17')
+		if Debug is True: print 'MQTT published TopicCount'
 		time.sleep(MQTT_Wait)
 		mqttc.publish("salt/Percent", PercentFull)
 		if Debug is True: print 'MQTT published Percent'
@@ -171,14 +177,44 @@ def MQTT():
 		mqttc.publish("salt/Bags", Bags)
 		if Debug is True: print 'MQTT published Bags'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Emails", MQTT_Email)
+		mqttc.publish("salt/Email/Emails", MQTT_Email)
 		if Debug is True: print 'MQTT published Emails'
 		time.sleep(MQTT_Wait)
 		mqttc.publish("salt/Time", ETime)
 		if Debug is True: print 'MQTT published Time'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Debug", MQTT_Debug)
+		mqttc.publish("salt/Debugy/DebugEnabled", MQTT_Debug)
 		if Debug is True: print 'MQTT published Debug'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Email/MailDay", MailDay)
+		if Debug is True: print 'MQTT published MailDay'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Email/MailDayInfo", 'Monday = 0, Tuesday = 1, Wensday = 2, Thursday = 3, Friday = 4, Saturday = 5, Sunday = 6')
+		if Debug is True: print 'MQTT published MailDayInfo'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Constant/Samples", Samples)
+		if Debug is True: print 'MQTT published Samples'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Constant/lvTop", lvTop)
+		if Debug is True: print 'MQTT published lvTop'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Constant/lvBag", lvBag)
+		if Debug is True: print 'MQTT published lvBag'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Constant/lvFull", lvFull)
+		if Debug is True: print 'MQTT published lvFull'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Constant/TopLv", TopLv)
+		if Debug is True: print 'MQTT published TopLv'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Constant/BottomLv", BottomLv)
+		if Debug is True: print 'MQTT published BottomLv'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Constant/lvEmpty", lvEmpty)
+		if Debug is True: print 'MQTT published lvEmpty'
+		time.sleep(MQTT_Wait)
+		mqttc.publish("salt/Debugy/MQTT_Finish", 'True')
+		if Debug is True: print 'MQTT published MQTT_All True'
 		if Debug is True: print "All MQTT updated"
 	except:
 		# Prevent crashing if Broker is disconnected
@@ -214,9 +250,9 @@ try:
 	while True:
 		distance = measure_average()
 		Dist = str(round(distance,2))
-		Bags = str((int(distance-lvTop))/lvBag)
+		Bags = str(round((distance-lvTop)/lvBag,1))
 		#PercentFull = str(int((TopLv - lvTop - distance)/(TopLv-lvTop)*100))
-		PercentFull = str(int((lvEmpty - distance + lvTop)/(lvEmpty)*100))
+		PercentFull = str(round((lvEmpty - distance + lvTop)/(lvEmpty)*100,1))
 		SaltLv = str(round(TopLv - distance,2))
 		now = datetime.now()
 		ETime = str(now.strftime("%H:%M:%S on %m-%d-%Y"))
