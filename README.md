@@ -34,3 +34,7 @@ Percent (%) - Percentage full of salt
 4/8/2020  
 Added a pause between MQTT Publish Topics, due to dropped topics on some MQTT Brokers  
 Expanded MQTT Debug  
+
+4/17/2020 1430  
+Added MQTT Topics  
+Added decimal to PercentFull and Bags  
