@@ -2,9 +2,8 @@
 
 # Salt Tank Level Program
 
-# Last Change 4/17/2020 1430
-# Added MQTT Topics
-# Added decimal to PercentFull and Bags
+# Last Change 4/18/2020 2130
+# Added MQTT QoS and Retain
 
 import time						# Sleep Function
 import RPi.GPIO as GPIO			# GPIO Controls
@@ -162,58 +161,62 @@ def MQTT():
 		mqttc = mqtt.Client("python_pub")
 		mqttc.connect(Broker_IP, Broker_Port)
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Debugy/MQTT_Finish", 'False')
+		QoS = 0
+		Retain = True
+		# mqttc.publish(Topic, Payload, QoS, Retain)
+		# QoS 0=Send only, 1=Confirm, 2=send until confirmed
+		mqttc.publish("salt/Debugy/MQTT_Finish", 'False', QoS, Retain)
 		if Debug is True: print 'MQTT published MQTT_All False'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Debugy/Count", '17')
+		mqttc.publish("salt/Debugy/Count", '17', QoS, Retain)
 		if Debug is True: print 'MQTT published TopicCount'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Percent", PercentFull)
+		mqttc.publish("salt/Percent", PercentFull, QoS, Retain)
 		if Debug is True: print 'MQTT published Percent'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Level", SaltLv)
+		mqttc.publish("salt/Level", SaltLv, QoS, Retain)
 		if Debug is True: print 'MQTT published Level'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Bags", Bags)
+		mqttc.publish("salt/Bags", Bags, QoS, Retain)
 		if Debug is True: print 'MQTT published Bags'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Email/Emails", MQTT_Email)
+		mqttc.publish("salt/Email/Emails", MQTT_Email, QoS, Retain)
 		if Debug is True: print 'MQTT published Emails'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Time", ETime)
+		mqttc.publish("salt/Time", ETime, QoS, Retain)
 		if Debug is True: print 'MQTT published Time'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Debugy/DebugEnabled", MQTT_Debug)
+		mqttc.publish("salt/Debugy/DebugEnabled", MQTT_Debug, QoS, Retain)
 		if Debug is True: print 'MQTT published Debug'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Email/MailDay", MailDay)
+		mqttc.publish("salt/Email/MailDay", MailDay, QoS, Retain)
 		if Debug is True: print 'MQTT published MailDay'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Email/MailDayInfo", 'Monday = 0, Tuesday = 1, Wensday = 2, Thursday = 3, Friday = 4, Saturday = 5, Sunday = 6')
+		mqttc.publish("salt/Email/MailDayInfo", 'Monday = 0, Tuesday = 1, Wensday = 2, Thursday = 3, Friday = 4, Saturday = 5, Sunday = 6', QoS, Retain)
 		if Debug is True: print 'MQTT published MailDayInfo'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Constant/Samples", Samples)
+		mqttc.publish("salt/Constant/Samples", Samples, QoS, Retain)
 		if Debug is True: print 'MQTT published Samples'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Constant/lvTop", lvTop)
+		mqttc.publish("salt/Constant/lvTop", lvTop, QoS, Retain)
 		if Debug is True: print 'MQTT published lvTop'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Constant/lvBag", lvBag)
+		mqttc.publish("salt/Constant/lvBag", lvBag, QoS, Retain)
 		if Debug is True: print 'MQTT published lvBag'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Constant/lvFull", lvFull)
+		mqttc.publish("salt/Constant/lvFull", lvFull, QoS, Retain)
 		if Debug is True: print 'MQTT published lvFull'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Constant/TopLv", TopLv)
+		mqttc.publish("salt/Constant/TopLv", TopLv, QoS, Retain)
 		if Debug is True: print 'MQTT published TopLv'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Constant/BottomLv", BottomLv)
+		mqttc.publish("salt/Constant/BottomLv", BottomLv, QoS, Retain)
 		if Debug is True: print 'MQTT published BottomLv'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Constant/lvEmpty", lvEmpty)
+		mqttc.publish("salt/Constant/lvEmpty", lvEmpty, QoS, Retain)
 		if Debug is True: print 'MQTT published lvEmpty'
 		time.sleep(MQTT_Wait)
-		mqttc.publish("salt/Debugy/MQTT_Finish", 'True')
+		mqttc.publish("salt/Debugy/MQTT_Finish", 'True', QoS, Retain)
 		if Debug is True: print 'MQTT published MQTT_All True'
 		if Debug is True: print "All MQTT updated"
 	except:
