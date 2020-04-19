@@ -47,3 +47,6 @@ Expanded MQTT Debug
 4/17/2020 1430  
 Added MQTT Topics  
 Added decimal to PercentFull and Bags  
+
+4/18/2020 2130  
+Added MQTT QoS and Retain  
